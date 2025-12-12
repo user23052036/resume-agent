@@ -1,3 +1,8 @@
+// This script fetches a GitHub user's profile and repositories, sends the combined data to the backend
+// for AI analysis across multiple job roles, and saves the generated summaries into data/generated/github_summary.json.
+
+
+
 import fetch from "node-fetch";
 import dotenv from "dotenv";
 import fs from "fs";
@@ -44,9 +49,13 @@ async function run() {
 
   const fullText = profileText + "\nRepositories:\n" + reposText;
 
-  // Generate summaries for different roles
-  const roles = ["backend-engineer", "security-engineer", "open-source-contributor"];
+  // Generate summaries for different roles (configurable via ROLES env var)
+  const defaultRoles = ["backend-engineer", "security-engineer", "open-source-contributor"];
+  const rolesEnv = process.env.ROLES;
+  const roles = rolesEnv ? rolesEnv.split(',').map(r => r.trim()) : defaultRoles;
   const summaries: any = {};
+
+  console.log(`Generating summaries for roles: ${roles.join(', ')}`);
 
   const backendUrl = process.env.BACKEND_URL || "http://localhost:3000";
 

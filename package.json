@@ -6,6 +6,7 @@
   "scripts": {
     "test:agent": "tsx backend/cli-test.ts",
     "generate:summaries": "tsx scripts/generate-summaries.ts",
+    "ingest:profile": "tsx scripts/ingest-profile.ts",
     "dev": "tsx backend/index.ts",
     "mock:llm": "tsx backend/mock/togetherMockServer.ts",
     "start": "node dist/backend/index.js",

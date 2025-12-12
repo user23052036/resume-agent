@@ -1,9 +1,21 @@
+// This script fetches a GitHub user's profile and repos, sends them to the backend AI analyzer,
+// and prints the generated summary for quick GitHub profile evaluation.
+// Usage: tsx scripts/ingest-profile.ts [role] or set ROLE env var
+
+
 import fetch from "node-fetch";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 async function run() {
+  // Get role from command line argument or environment variable
+  const roleArg = process.argv[2]; // First argument after script name
+  const roleEnv = process.env.ROLE;
+  const role = roleArg || roleEnv || "github-profile";
+
+  console.log(`Using role: ${role}`);
+
   const githubUser = process.env.GITHUB_USER;
   if (!githubUser) {
     console.error("Please set GITHUB_USER in env");
@@ -32,7 +44,7 @@ async function run() {
   const resp = await fetch(`${backendUrl}/api/resume/analyze`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, kind: "github-profile" }),
+    body: JSON.stringify({ text, kind: role }),
   });
 
   if (!resp.ok) {
