@@ -1,9 +1,9 @@
 'use client'
 
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, Code, Shield, Award, Github, Moon, Sun, Menu, X, Terminal, Zap, Bot, User, Loader2, MessageSquare, ArrowRight, Linkedin, Mail, ExternalLink, Star, Code2, GitBranch, Server, Cloud, Database } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React from 'react';
+import { Github, ExternalLink, Star } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface Project {
   id: string;
@@ -23,7 +23,7 @@ interface ProjectCardProps {
 
 
 
-export const ProjectCard = ({ project, isHighlighted }) => {
+export const ProjectCard = ({ project, isHighlighted }: ProjectCardProps) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

@@ -1,12 +1,16 @@
 
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, Code, Shield, Award, Github, Moon, Sun, Menu, X, Terminal, Zap, Bot, User, Loader2, MessageSquare, ArrowRight, Linkedin, Mail, ExternalLink, Star, Code2, GitBranch, Server, Cloud, Database } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React from 'react';
+import { Github, Moon, Sun, Linkedin, Mail } from 'lucide-react';
+import { motion } from 'framer-motion';
 
+interface HeaderProps {
+  darkMode: boolean;
+  setDarkMode: (darkMode: boolean) => void;
+}
 
-export const Header = ({ darkMode, setDarkMode }) => {
+export const Header = ({ darkMode, setDarkMode }: HeaderProps) => {
   return (
     <motion.header 
       initial={{ y: -100 }}

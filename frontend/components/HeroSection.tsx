@@ -1,9 +1,9 @@
 
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, Code, Shield, Award, Github, Moon, Sun, Menu, X, Terminal, Zap, Bot, User, Loader2, MessageSquare, ArrowRight, Linkedin, Mail, ExternalLink, Star, Code2, GitBranch, Server, Cloud, Database } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React from 'react';
+import { Sparkles, MessageSquare, ArrowRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { RoleSelector } from './RoleSelector';
 
 interface HeroSectionProps {
@@ -13,7 +13,7 @@ interface HeroSectionProps {
 }
 
 
-export const HeroSection = ({ selectedRole, onSelectRole, onOpenChat }) => {
+export const HeroSection = ({ selectedRole, onSelectRole, onOpenChat }: HeroSectionProps) => {
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center bg-gradient-hero overflow-hidden">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -39,13 +39,13 @@ export const HeroSection = ({ selectedRole, onSelectRole, onOpenChat }) => {
         </motion.div>
 
         <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-          <span className="text-foreground">Don't Read Resumes.</span>
+          <span className="text-foreground">Don&#39;t Read Resumes.</span>
           <br />
           <span className="bg-gradient-primary bg-clip-text text-transparent">Chat With Them.</span>
         </motion.h1>
 
         <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-          Skip the tedious resume scanning. Ask questions and get instant, tailored answers about any candidate's skills, projects, and experience.
+          Skip the tedious resume scanning. Ask questions and get instant, tailored answers about any candidate&#39;s skills, projects, and experience.
         </motion.p>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="flex justify-center mb-8">

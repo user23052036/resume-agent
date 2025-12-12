@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, Code, Shield, Award, Github, Moon, Sun, Menu, X, Terminal, Zap, Bot, User, Loader2, MessageSquare, ArrowRight, Linkedin, Mail, ExternalLink, Star, Code2, GitBranch, Server, Cloud, Database } from 'lucide-react';
+import { Send, Bot, User, Loader2, MessageSquare, X, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Message {
@@ -24,12 +24,12 @@ const suggestedQuestions = [
 ];
 
 
-export const ChatPanel = ({ onHighlightProject }) => {
-  const [messages, setMessages] = useState([{ id: '1', role: 'agent', content: "Hi! I'm an AI assistant that knows everything about this candidate. Ask me anything about their skills, projects, or experience. I can tailor my responses based on whether you're a recruiter, mentor, or peer!", timestamp: new Date() }]);
+export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
+  const [messages, setMessages] = useState<Message[]>([{ id: '1', role: 'agent', content: "Hi! I'm an AI assistant that knows everything about this candidate. Ask me anything about their skills, projects, or experience. I can tailor my responses based on whether you're a recruiter, mentor, or peer!", timestamp: new Date() }]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef(null);
-  const inputRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -38,7 +38,7 @@ export const ChatPanel = ({ onHighlightProject }) => {
   const handleSend = async () => {
     if (!input.trim() || isTyping) return;
 
-    const userMessage = { id: Date.now().toString(), role: 'user', content: input, timestamp: new Date() };
+    const userMessage: Message = { id: Date.now().toString(), role: 'user', content: input, timestamp: new Date() };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
@@ -51,14 +51,14 @@ export const ChatPanel = ({ onHighlightProject }) => {
       ];
 
       const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-      const agentMessage = { id: (Date.now() + 1).toString(), role: 'agent', content: randomResponse.content, timestamp: new Date(), references: randomResponse.references };
+      const agentMessage: Message = { id: (Date.now() + 1).toString(), role: 'agent', content: randomResponse.content, timestamp: new Date(), references: randomResponse.references };
 
       setMessages(prev => [...prev, agentMessage]);
       setIsTyping(false);
     }, 1500);
   };
 
-  const handleSuggestion = (question) => {
+  const handleSuggestion = (question: string) => {
     setInput(question);
     inputRef.current?.focus();
   };
@@ -147,4 +147,3 @@ export const ChatPanel = ({ onHighlightProject }) => {
     </div>
   );
 };
-

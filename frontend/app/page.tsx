@@ -83,7 +83,7 @@ const App = () => {
   const [darkMode, setDarkMode] = useState(true);
   const [selectedRole, setSelectedRole] = useState('backend-engineer');
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [highlightedProject, setHighlightedProject] = useState(null);
+  const [highlightedProject, setHighlightedProject] = useState<string | null>(null);
 
   useEffect(() => {
     if (darkMode) {
@@ -93,27 +93,12 @@ const App = () => {
     }
   }, [darkMode]);
 
-  const handleHighlightProject = (projectId) => {
+  const handleHighlightProject = (projectId: string) => {
     setHighlightedProject(projectId);
     setTimeout(() => setHighlightedProject(null), 3000);
   };
 
-  const Target = ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"/>
-      <circle cx="12" cy="12" r="6"/>
-      <circle cx="12" cy="12" r="2"/>
-    </svg>
-  );
 
-  const Users = ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-      <circle cx="9" cy="7" r="4"/>
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-    </svg>
-  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -137,10 +122,10 @@ const App = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { icon: MessageSquare, title: 'Chat Interface', description: 'Natural conversation with AI that knows every detail of the candidate\'s profile.' },
-              { icon: Target, title: 'Role-Based Summaries', description: 'Get tailored insights whether you\'re hiring for backend, security, or open source roles.' },
-              { icon: Zap, title: 'Instant Answers', description: 'No more scanning through pages. Get precise answers in seconds.' },
-              { icon: Users, title: 'Multi-Perspective', description: 'Designed for recruiters, mentors, and peers with appropriate depth levels.' }
+              { icon: MessageSquare, title: "Chat Interface", description: "Natural conversation with AI that knows every detail of the candidate's profile." },
+              { icon: Target, title: "Role-Based Summaries", description: "Get tailored insights whether you're hiring for backend, security, or open source roles." },
+              { icon: Zap, title: "Instant Answers", description: "No more scanning through pages. Get precise answers in seconds." },
+              { icon: Users, title: "Multi-Perspective", description: "Designed for recruiters, mentors, and peers with appropriate depth levels." }
             ].map((feature, index) => (
               <motion.div
                 key={feature.title}
