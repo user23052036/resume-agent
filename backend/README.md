@@ -1,70 +1,203 @@
-Backend for resume-agent
+# Resume-Agent Backend
 
-Environment
-- Create a `.env` file at the repository root with:
+A Node.js/Express backend service for AI-powered resume and portfolio analysis. Supports both text and PDF resume analysis using OpenRouter LLM integration.
 
-```
+## Features
+
+- **Resume Analysis**: Analyze resumes in both text and PDF formats
+- **LLM Integration**: OpenRouter-powered AI analysis with fallback to local processing
+- **PDF Processing**: Automatic text extraction from PDF documents
+- **Role-Based Summaries**: Specialized analysis for different career roles
+- **Mock Testing**: Local mock server for development and testing
+
+## Environment Setup
+
+Create a `.env` file at the repository root:
+
+```bash
 PORT=3000
 OPENROUTER_API_KEY=your_openrouter_api_key
 OPENROUTER_API_URL=https://openrouter.ai/api/v1/chat/completions
 OPENROUTER_MODEL=mistralai/mistral-7b-instruct
 ```
 
-- Get a free OpenRouter API key at https://openrouter.ai (includes free credits for testing)
+**Get a free OpenRouter API key at [https://openrouter.ai](https://openrouter.ai)** (includes free credits for testing).
 
-Usage
-- Development (run in place using `tsx`):
+## Installation & Usage
 
-```
+### Development
+
+```bash
 npm run dev
 ```
 
-- Build and run:
+### Production
 
-```
+```bash
 npm run build
 npm start
 ```
 
-Endpoints
-- `GET /health` — health check
-- `POST /api/resume/analyze` — body: `{ text: string, kind?: string }` returns `{ summary, inputLength, engine, timestamp }`
-- `POST /api/llm/test` — body: `{ input: string, instruction?: string, apiKey?: string, model?: string }` returns `{ result }` (test OpenRouter LLM endpoint)
+## API Endpoints
 
-Notes
- - If `OPENROUTER_API_KEY` is set in the environment, the resume summarizer will call OpenRouter LLM. Otherwise, a local heuristic summarizer is used.
- - OpenRouter offers free tier credits (~$5 free) on signup — perfect for testing without cost.
- - The adapter supports custom models; set `OPENROUTER_MODEL` to use different LLMs (e.g., `meta-llama/llama-2-7b-chat`, `openai/gpt-3.5-turbo`).
+### Health Check
 
-OpenRouter LLM test
- - POST `/api/llm/test` — body: `{ input: string, instruction?: string, kind?: string }` returns `{ result: string }`. Use this to verify your OpenRouter endpoint and key.
+- `GET /health` - Service health check
+- Response: `{ "status": "ok" }`
 
-Example:
-```
-curl -X POST http://localhost:3000/api/llm/test \
-	-H "Content-Type: application/json" \
-	-d '{"input":"Hello world. This is a test.", "instruction":"Summarize in one sentence."}'
-```
+### Resume Analysis
 
-Local mock server
- - You can run a local mock OpenRouter server for testing: `npm run mock:llm` (starts at `http://localhost:4000/api/v1/chat/completions`).
- - Then either set `OPENROUTER_API_URL=http://localhost:4000/api/v1/chat/completions` and `OPENROUTER_API_KEY=mock` and restart the backend, or call the test route with `apiUrl`/`apiKey` in the request body (useful when you don't want to restart the backend):
+- `POST /api/resume/analyze` - Analyze resume text or PDF
 
-Example using per-request `apiUrl`/`apiKey` (no backend restart required):
-```
-curl -X POST http://localhost:3000/api/llm/test \
-	-H "Content-Type: application/json" \
-	-d '{"input":"Hello world.", "instruction":"Summarize.", "apiUrl":"http://localhost:4000/api/v1/chat/completions", "apiKey":"mock"}'
+**Text Analysis** (JSON):
+
+```bash
+curl -X POST http://localhost:3000/api/resume/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"text": "John Doe. Senior Developer...", "kind": "backend-engineer"}'
 ```
 
-Hackathon tool integrations
-- `OpenRouter`: used as the primary LLM. Configure `OPENROUTER_API_URL` and `OPENROUTER_API_KEY`.
-- `CodeRabbit`: optional PR review integration — set `CODE_RABBIT_API_URL` and `CODE_RABBIT_API_KEY` to enable programmatic reviews.
-- `Oumi`: optional ranking/evaluation endpoint — set `OUMI_API_URL`/`OUMI_API_KEY` to enable.
-- `Cline`: optional autonomous coding workflow runner — set `CLINE_API_URL`/`CLINE_API_KEY` to enable remote task triggers.
-- `Kestra`: workflow definitions are included under `kestra/` — set `KESTRA_URL`/`KESTRA_API_KEY` to trigger workflows programmatically.
-- `Vercel`: `vercel.json` added for quick deployment; the backend is written to be deployable on Vercel's Node runtimes.
+**PDF Analysis** (Multipart):
 
-Usage notes for integrations
-- All integrations are defensive: nothing is called unless the corresponding `*_API_URL` (and where applicable `*_API_KEY`) env vars are present.
-- A GitHub profile ingestion script is available at `scripts/ingest-profile.ts` — this can be wired into a Kestra workflow or run directly to send a profile summary to the backend.
+```bash
+curl -X POST http://localhost:3000/api/resume/analyze \
+  -F "file=@resume.pdf" \
+  -F "kind=backend-engineer"
+```
+
+**Response Format**:
+
+```json
+{
+  "summary": "Professional summary generated by AI...",
+  "inputLength": 1250,
+  "engine": "openrouter",
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "pdfInfo": {
+    "pageCount": 2,
+    "extractedAt": "2024-01-15T10:29:58.000Z"
+  }
+}
+```
+
+### LLM Testing
+
+- `POST /api/llm/test` - Test OpenRouter LLM endpoint
+- Body: `{ input: string, instruction?: string, apiKey?: string, model?: string }`
+- Returns: `{ result: string }`
+
+## Dependencies
+
+### Core Dependencies
+
+- `express` - Web framework
+- `cors` - Cross-origin resource sharing
+- `dotenv` - Environment configuration
+- `node-fetch` - HTTP client for LLM calls
+
+### PDF Processing
+
+- `pdf-parse` - PDF text extraction
+- `multer` - Multipart file handling
+
+### Development
+
+- `tsx` - TypeScript execution
+- `typescript` - TypeScript compiler
+
+## Architecture
+
+### Services
+
+- **`resumeService.ts`** - Core resume analysis logic and LLM integration
+- **`pdfService.ts`** - PDF text extraction and validation
+- **`integrations.ts`** - External service integrations
+
+### Controllers
+
+- **`resumeController.ts`** - Handles resume analysis requests (text and PDF)
+
+### Routes
+
+- **`resume.ts`** - Resume analysis endpoints
+- **`together.ts`** - LLM testing endpoints
+
+### Adapters
+
+- **`openrouterAdapter.ts`** - OpenRouter LLM API integration
+
+## LLM Configuration
+
+The backend uses a hybrid approach:
+
+1. **Primary**: OpenRouter LLM (when `OPENROUTER_API_KEY` is set)
+2. **Fallback**: Local heuristic summarizer (when no API key)
+
+### Supported Models
+
+- `mistralai/mistral-7b-instruct` (default, free)
+- `meta-llama/llama-2-7b-chat` (free)
+- `openai/gpt-3.5-turbo` (paid)
+- `openai/gpt-4` (paid)
+
+## Testing
+
+### Local Mock Server
+
+Run a local mock LLM server for development:
+
+```bash
+npm run mock:llm
+```
+
+This starts at `http://localhost:4000/api/v1/chat/completions`.
+
+### Test Scripts
+
+- `npm run test:agent` - Test resume analysis with CLI
+- `simple-test.sh` - Basic endpoint testing
+- `test-backend.sh` - Comprehensive backend testing
+
+## Hackathon Integrations
+
+The backend supports integration with hackathon sponsor tools:
+
+- **OpenRouter**: Primary LLM provider
+- **CodeRabbit**: PR review automation (optional)
+- **Oumi**: Model ranking/evaluation (optional)
+- **Cline**: Autonomous coding workflows (optional)
+- **Kestra**: Workflow orchestration (optional)
+- **Vercel**: Deployment platform
+
+All integrations are optional and only activate when corresponding environment variables are set.
+
+## File Structure
+
+```bash
+backend/
+├── adapters/           # External service adapters
+├── controllers/        # Request handlers
+├── mock/              # Testing mocks
+├── routes/            # API route definitions
+├── services/          # Business logic
+├── types.ts           # TypeScript type definitions
+├── index.ts           # Main server entry point
+├── cli-test.ts        # CLI testing utility
+└── README.md          # This file
+```
+
+## Error Handling
+
+The API includes comprehensive error handling:
+
+- Invalid PDF files
+- Missing required fields
+- LLM service failures
+- File size limits (10MB for PDFs)
+
+## Security
+
+- File type validation for PDF uploads
+- File size limits
+- Input sanitization
+- CORS configuration
