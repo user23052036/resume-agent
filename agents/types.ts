@@ -19,6 +19,8 @@ export interface RoleSummary {
   summary: string;
   generated_at: string;
   confidence?: number;
+  oumi_score?: any;
+  oumi_rank?: number;
 }
 
 export interface AgentResult {
