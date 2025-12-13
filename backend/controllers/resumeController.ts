@@ -1,6 +1,8 @@
 import { GenerateParams, AnalysisResult } from "../types";
 import { generateSummary } from "../services/resumeService";
 import { extractTextFromPDF, validatePDFFile } from "../services/pdfService";
+import fs from "fs";
+import path from "path";
 
 export async function analyzeResume(params: GenerateParams): Promise<AnalysisResult> {
   // Input validation
@@ -9,6 +11,25 @@ export async function analyzeResume(params: GenerateParams): Promise<AnalysisRes
   }
 
   const result = await generateSummary(params.text, params.kind);
+
+  // Save extracted text to data file for chat functionality
+  const resumeDataPath = path.join(process.cwd(), "data/raw/resume-content.json");
+  const resumeData = {
+    extracted_text: params.text,
+    source: "text-input",
+    extracted_at: new Date().toISOString(),
+    metadata: {
+      uploadedAt: new Date().toISOString()
+    }
+  };
+
+  // Ensure directory exists
+  const dir = path.dirname(resumeDataPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  fs.writeFileSync(resumeDataPath, JSON.stringify(resumeData, null, 2));
 
   const analysisResult: AnalysisResult = {
     summary: result.summary,
@@ -42,6 +63,26 @@ export async function analyzeResumePDF(pdfBuffer: Buffer, kind?: string): Promis
 
   // Extract text from PDF
   const pdfResult = await extractTextFromPDF(pdfBuffer);
+
+  // Save extracted text to data file for chat functionality
+  const resumeDataPath = path.join(process.cwd(), "data/raw/resume-content.json");
+  const resumeData = {
+    extracted_text: pdfResult.text,
+    source: "pdf-upload",
+    extracted_at: pdfResult.extractedAt,
+    metadata: {
+      pageCount: pdfResult.pageCount,
+      uploadedAt: new Date().toISOString()
+    }
+  };
+
+  // Ensure directory exists
+  const dir = path.dirname(resumeDataPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  fs.writeFileSync(resumeDataPath, JSON.stringify(resumeData, null, 2));
 
   // Generate summary using existing LLM service
   const result = await generateSummary(pdfResult.text, kind);
