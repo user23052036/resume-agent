@@ -1,0 +1,30 @@
+
+> ai-resume-portfolio-agent@1.0.0 mock:llm
+> tsx backend/mock/togetherMockServer.ts
+
+node:events:486
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at app.listen (/home/midori/Desktop/codebase/resume-agent/node_modules/express/lib/application.js:635:24)
+    at express (/home/midori/Desktop/codebase/resume-agent/backend/mock/togetherMockServer.ts:31:5)
+    at Object.<anonymous> (/home/midori/Desktop/codebase/resume-agent/backend/mock/togetherMockServer.ts:35:16)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14)
+    at Object.transformer (/home/midori/Desktop/codebase/resume-agent/node_modules/tsx/dist/register-D46fvsV_.cjs:3:1104)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module._load (node:internal/modules/cjs/loader:1300:12)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -98,
+  syscall: 'listen',
+  address: '::',
+  port: 4000
+}
+
+Node.js v24.11.1
