@@ -1,4 +1,4 @@
-import { ModelResponse } from "../adapters/openrouterAdapter";
+import { ModelResponse } from "../types";
 
 /**
  * Model evaluation and ranking system

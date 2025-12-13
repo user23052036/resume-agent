@@ -1,4 +1,5 @@
-import { callOpenRouterLLM, ModelResponse } from "../adapters/openrouterAdapter";
+import { callOpenRouterLLMWithResponse } from "../adapters/openrouterAdapter";
+import { ModelResponse } from "../types";
 import { modelRanker } from "./modelRanker";
 
 /**
@@ -19,7 +20,7 @@ export async function generateSummary(text: string, kind?: string): Promise<{ su
       const bestModel = modelRanker.getBestModel(kind);
       const instruction = `You are a professional resume summarizer. Summarize the following resume text into a concise, professional summary of 2-3 sentences highlighting key skills and experience.`;
 
-      const result: ModelResponse = await callOpenRouterLLM(text, instruction, kind, {
+      const result: ModelResponse = await callOpenRouterLLMWithResponse(text, instruction, kind, {
         apiKey,
         retries: 2,
         timeoutMs: 15000,

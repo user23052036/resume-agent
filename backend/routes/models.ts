@@ -1,6 +1,6 @@
 import express from "express";
 import { modelRanker } from "../services/modelRanker";
-import { callOpenRouterLLM } from "../adapters/openrouterAdapter";
+import { callOpenRouterLLMWithResponse } from "../adapters/openrouterAdapter";
 
 const router = express.Router();
 
@@ -60,9 +60,8 @@ router.post("/evaluate", async (req, res) => {
       });
     }
 
-    const result = await callOpenRouterLLM(text, instruction || "Evaluate this text", kind, {
-      model,
-      mockMode: true // Use mock mode for evaluation testing
+    const result = await callOpenRouterLLMWithResponse(text, instruction || "Evaluate this text", kind, {
+      model
     });
 
     const evaluation = await modelRanker.evaluateResponse(result, kind);

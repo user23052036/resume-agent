@@ -20,3 +20,12 @@ export interface AnalysisResult
   model?: string;
   responseTime?: number;
 }
+
+export interface ModelResponse
+{
+  success: boolean;
+  response?: string;
+  model?: string;
+  responseTime?: number;
+  error?: string;
+}

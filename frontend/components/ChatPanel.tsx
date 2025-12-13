@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2, MessageSquare, X, Sparkles } from 'lucide-react';
+import { Send, Loader2, Paperclip } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Message {
@@ -9,140 +9,211 @@ interface Message {
   role: 'user' | 'agent';
   content: string;
   timestamp: Date;
-  references?: string[];
 }
 
-interface ChatPanelProps {
-  onHighlightProject?: (projectId: string) => void;
-}
+export const ChatPanel = () => {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: 'init',
+      role: 'agent',
+      content:
+        "Hi! Upload a resume PDF first, then ask me anything about the candidate.",
+      timestamp: new Date(),
+    },
+  ]);
 
-const suggestedQuestions = [
-  "What's their strongest backend project?",
-  "Summarize their security experience",
-  "What makes them a good fit for GSoC?",
-  "Explain their networking skills",
-];
-
-
-export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
-  const [messages, setMessages] = useState<Message[]>([{ id: '1', role: 'agent', content: "Hi! I'm an AI assistant that knows everything about this candidate. Ask me anything about their skills, projects, or experience. I can tailor my responses based on whether you're a recruiter, mentor, or peer!", timestamp: new Date() }]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // ---------------------------------
+  // CHAT → BACKEND AGENT
+  // ---------------------------------
   const handleSend = async () => {
     if (!input.trim() || isTyping) return;
 
-    const userMessage: Message = { id: Date.now().toString(), role: 'user', content: input, timestamp: new Date() };
-    setMessages(prev => [...prev, userMessage]);
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: input,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      const responses = [
-        { content: "Based on their GitHub profile and project history, they have strong experience in backend development with Node.js, Express, and PostgreSQL. Their 'Distributed Task Scheduler' project demonstrates proficiency in API design and workflow automation.", references: ['task-scheduler'] },
-        { content: "They've shown consistent growth in security through CTF participation and practical projects. Their networking fundamentals are solid, with hands-on experience in socket programming and protocol implementation.", references: ['security-labs'] },
-        { content: "For a GSoC role, their open-source contributions and ability to work with complex codebases would be valuable. They've demonstrated the ability to learn quickly and integrate multiple technologies effectively.", references: ['open-source'] }
-      ];
+    try {
+      const res = await fetch('http://localhost:3000/api/agent/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage.content,
+        }),
+      });
 
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-      const agentMessage: Message = { id: (Date.now() + 1).toString(), role: 'agent', content: randomResponse.content, timestamp: new Date(), references: randomResponse.references };
+      const data = await res.json();
 
-      setMessages(prev => [...prev, agentMessage]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          role: 'agent',
+          content: data.response || 'No response generated.',
+          timestamp: new Date(),
+        },
+      ]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: 'error',
+          role: 'agent',
+          content: '❌ Failed to reach the agent.',
+          timestamp: new Date(),
+        },
+      ]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
-  const handleSuggestion = (question: string) => {
-    setInput(question);
-    inputRef.current?.focus();
+  // ---------------------------------
+  // PDF RESUME UPLOAD
+  // ---------------------------------
+  const handlePDFUpload = async (file: File) => {
+    if (file.type !== 'application/pdf') {
+      alert('Only PDF resumes are supported.');
+      return;
+    }
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        role: 'user',
+        content: `📄 Uploaded resume: ${file.name}`,
+        timestamp: new Date(),
+      },
+    ]);
+
+    setIsTyping(true);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('http://localhost:3000/api/resume/analyze', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          role: 'agent',
+          content: data.summary || 'Resume uploaded successfully.',
+          timestamp: new Date(),
+        },
+      ]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          role: 'agent',
+          content: '⚠️ Resume upload failed.',
+          timestamp: new Date(),
+        },
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   return (
-    <div className="flex flex-col h-full backdrop-blur-md bg-card rounded-2xl overflow-hidden shadow-soft border border-border">
-      <div className="flex items-center gap-3 p-4 border-b border-border">
-        <div className="relative">
-          <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center">
-            <Bot className="w-5 h-5 text-inverted" />
-          </div>
-          <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-accent rounded-full border-2 border-card" />
-        </div>
-        <div>
-          <h3 className="font-semibold text-foreground">Resume Agent</h3>
-          <p className="text-xs text-muted-foreground">Ask anything</p>
-        </div>
-        <Sparkles className="w-4 h-4 text-primary ml-auto animate-pulse" />
-      </div>
-
+    <div className="flex flex-col h-full rounded-xl border bg-card">
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         <AnimatePresence>
-          {messages.map((message, index) => (
+          {messages.map((msg) => (
             <motion.div
-              key={message.id}
-              initial={{ opacity: 0, y: 10 }}
+              key={msg.id}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
+              className={`flex ${
+                msg.role === 'user' ? 'justify-end' : 'justify-start'
+              }`}
             >
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${message.role === 'user' ? 'bg-gradient-primary' : 'bg-muted'}`}>
-                {message.role === 'user' ? <User className="w-4 h-4 text-inverted" /> : <Bot className="w-4 h-4 text-primary" />}
-              </div>
-              <div className={`max-w-[80%] ${message.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-agent'} px-4 py-3`}>
-                <p className="text-sm leading-relaxed">{message.content}</p>
-                {message.references && message.references.length > 0 && (
-                  <div className="mt-2 pt-2 border-t border-border opacity-70">
-                    <p className="text-xs">Referenced: {message.references.join(', ')}</p>
-                  </div>
-                )}
+              <div
+                className={`px-4 py-2 rounded-lg max-w-[80%] text-sm ${
+                  msg.role === 'user'
+                    ? 'bg-primary text-white'
+                    : 'bg-muted'
+                }`}
+              >
+                {msg.content}
               </div>
             </motion.div>
           ))}
         </AnimatePresence>
 
         {isTyping && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-3">
-            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-              <Bot className="w-4 h-4 text-primary" />
-            </div>
-            <div className="chat-bubble-agent px-4 py-3">
-              <div className="flex gap-1">
-                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '0.2s' }} />
-                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '0.4s' }} />
-              </div>
-            </div>
-          </motion.div>
+          <div className="flex items-center gap-2 text-sm opacity-70">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Agent is thinking…
+          </div>
         )}
 
         <div ref={messagesEndRef} />
       </div>
 
-      {messages.length <= 2 && (
-        <div className="px-4 pb-2">
-          <p className="text-xs text-muted-foreground mb-2">Try asking:</p>
-          <div className="flex flex-wrap gap-2">
-            {suggestedQuestions.map((question, index) => (
-              <button key={index} onClick={() => handleSuggestion(question)} className="text-xs px-3 py-1.5 rounded-full bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all duration-200">
-                {question}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Input Area */}
+      <div className="p-4 border-t flex gap-2">
+        <input
+          type="file"
+          accept="application/pdf"
+          hidden
+          ref={fileInputRef}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handlePDFUpload(file);
+          }}
+        />
 
-      <div className="p-4 border-t border-border">
-        <div className="flex gap-3">
-          <input ref={inputRef} type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleSend()} placeholder="Ask about skills, projects, experience..." className="flex-1 px-4 py-3 rounded-lg border border-border outline-none transition-all text-sm text-foreground" disabled={isTyping} />
-          <button onClick={handleSend} disabled={!input.trim() || isTyping} className="px-6 py-3 rounded-lg bg-primary text-inverted hover:shadow-glow transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed">
-            {isTyping ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-          </button>
-        </div>
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="p-2 rounded-lg border"
+          title="Upload PDF resume"
+        >
+          <Paperclip className="w-5 h-5" />
+        </button>
+
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+          placeholder="Ask about skills, projects, experience..."
+          className="flex-1 px-3 py-2 border rounded-lg"
+          disabled={isTyping}
+        />
+
+        <button
+          onClick={handleSend}
+          disabled={isTyping || !input.trim()}
+          className="px-4 py-2 bg-primary text-white rounded-lg disabled:opacity-50"
+        >
+          <Send className="w-5 h-5" />
+        </button>
       </div>
     </div>
   );

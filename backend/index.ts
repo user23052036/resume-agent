@@ -1,3 +1,4 @@
+import agentRouter from "./routes/agent";
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -26,6 +27,7 @@ app.get("/health", (_req, res) => res.json({ status: "ok", port: portsToTry[curr
 app.use("/api/resume", resumeRouter);
 app.use("/api/llm", llmRouter);
 app.use("/api/models", modelsRouter);
+app.use("/api/agent", agentRouter);
 
 // Enhanced error handling middleware
 app.use((err: any, req: any, res: any, next: any) => {
