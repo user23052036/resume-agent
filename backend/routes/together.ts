@@ -4,10 +4,10 @@ import { callOpenRouterLLM } from "../adapters/openrouterAdapter";
 const router = Router();
 
 // POST /api/llm/test
-// body: { input: string, instruction?: string, kind?: string, apiKey?: string, model?: string }
+// body: { input: string, instruction?: string, kind?: string, apiKey?: string, apiUrl?: string, model?: string }
 router.post("/test", async (req, res) => {
   try {
-    const { input, instruction, kind, apiKey, model } = req.body;
+    const { input, instruction, kind, apiKey, apiUrl, model } = req.body;
     if (!input || typeof input !== "string") {
       return res.status(400).json({ error: "Missing or invalid 'input' in body" });
     }
@@ -19,7 +19,7 @@ router.post("/test", async (req, res) => {
     }
 
     const instr = instruction || "Summarize the text concisely in 2-3 sentences.";
-    const result = await callOpenRouterLLM(input, instr, kind, { apiKey: effectiveApiKey, model, retries: 2, timeoutMs: 15000 });
+    const result = await callOpenRouterLLM(input, instr, kind, { apiKey: effectiveApiKey, apiUrl, model, retries: 2, timeoutMs: 15000 });
     return res.json({ result });
   } catch (err: any) {
     console.error("Error calling OpenRouter LLM", err);
