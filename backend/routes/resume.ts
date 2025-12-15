@@ -58,6 +58,7 @@ router.post("/analyze", upload.single('file'), async (req, res) => {
       version: record.version,
       pdfInfo: record.pdfInfo,
       extractedLength: extractedText.length,
+      extracted_text: extractedText, // Include for stateless chat
     };
 
     if (req.file) {

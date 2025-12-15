@@ -20,7 +20,16 @@ let server;
 let currentPort = 0;
 
 app.use(cors());
-app.use(express.json({ limit: "1mb" }));
+
+/**
+ * IMPORTANT:
+ * Increase request body size.
+ * Needed because resume_text (PDF extracted text) can be large.
+ * This fixes "No response generated" issues on localhost & Vercel.
+ */
+
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 
 app.get("/health", (_req, res) => res.json({ status: "ok", port: portsToTry[currentPort] }));
 
