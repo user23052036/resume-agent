@@ -10,7 +10,7 @@ An interactive, AI-powered resume and portfolio agent that transforms static CVs
 
 ### 💬 Chat with AI
 
-![Chat with LLM](images/chat_with_LLM.png)
+![Chat with LLM](images/chat_with_llm.png)
 
 ### 🛠️ Technical Skills View
 
