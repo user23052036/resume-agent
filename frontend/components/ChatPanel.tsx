@@ -5,7 +5,7 @@ import { Send, Loader2, Paperclip } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 
-const MAX_RESUME_CHARS = 6000; // Vercel-safe limit
+// Resume storage moved to backend - no longer needed in frontend
 
 /**
  * Backend URL resolution
@@ -45,15 +45,8 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
-  // resumeId is UI/session identity only
+  // resumeId for backend lookup - resume text stored server-side
   const [resumeId, setResumeId] = useState<string | null>(null);
-
-  /**
-   * ❗ CRITICAL FIX ❗
-   * Resume text must NOT live only in React state.
-   * useRef survives renders and is safe for critical data.
-   */
-  const resumeTextRef = useRef<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -68,25 +61,6 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
   // --------------------------------------------------
   const handleSend = async () => {
     if (!input.trim() || isTyping || !resumeId) return;
-
-    const resumeTextRaw = resumeTextRef.current;
-
-    // Hard guard — REQUIRED for TS + runtime safety
-    if (!resumeTextRaw) {
-      console.error("resumeText missing at send time");
-      return;
-    }
-
-    const resumeTextToSend =
-      resumeTextRaw.length > MAX_RESUME_CHARS
-        ? resumeTextRaw.slice(0, MAX_RESUME_CHARS)
-        : resumeTextRaw;
-
-    // Hard guard — should never happen, but explicit is better
-    if (!resumeTextToSend) {
-      console.error('resumeText missing at send time');
-      return;
-    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -107,7 +81,6 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           resume_id: resumeId,
-          resume_text: resumeTextToSend, // FIX: send normalized/resilient resume text
           message: userMessage.content,
         }),
       });
@@ -119,8 +92,6 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
         {
           id: (Date.now() + 1).toString(),
           role: 'agent',
-          // FIX: show backend error if present,
-          // fallback to 'No response generated.'
           content: data.response ?? data.error ?? 'No response generated.',
           timestamp: new Date(),
         },
@@ -185,13 +156,10 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
       }
 
       /**
-       * Store BOTH:
-       * - resumeId → UI identity
-       * - resumeTextRef → chat context (persistent)
+       * Store resumeId for backend lookup
+       * Resume text is now stored server-side
        */
       setResumeId(data.resume_id);
-      // FIX: support both possible backend keys
-      resumeTextRef.current = data.extracted_text ?? data.extractedText ?? null;
 
       setMessages((prev) => {
         const updated = [...prev];
@@ -304,7 +272,7 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
 
         <button
           onClick={handleSend}
-          disabled={isTyping || !input.trim() || !resumeId || !resumeTextRef.current}
+          disabled={isTyping || !input.trim() || !resumeId}
           className="px-4 py-2 bg-primary text-white rounded-lg disabled:opacity-50"
         >
           <Send className="w-5 h-5" />
