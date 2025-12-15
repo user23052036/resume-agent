@@ -5,6 +5,11 @@ import { Send, Loader2, Paperclip } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 
+const BACKEND_URL = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_BACKEND_URL
+  ? process.env.NEXT_PUBLIC_BACKEND_URL
+  : 'http://localhost:3000';
+console.log('RESUME-AGENT: BACKEND_URL =', BACKEND_URL);
+
 type ChatPanelProps = {
   onHighlightProject?: (projectId: string) => void;
 };
@@ -29,11 +34,10 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
 
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [resumeId, setResumeId] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -43,7 +47,7 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
   // SEND CHAT MESSAGE
   // ------------------------------
   const handleSend = async () => {
-    if (!input.trim() || isTyping || !BACKEND_URL) return;
+    if (!input.trim() || isTyping || !resumeId) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -57,10 +61,12 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
     setIsTyping(true);
 
     try {
-      const res = await fetch(`${BACKEND_URL}/api/agent/chat`, {
+      const chatUrl = `${BACKEND_URL}/api/agent/chat`;
+      console.log('RESUME-AGENT: sending chat to', chatUrl, 'body=', { resume_id: resumeId, message: userMessage.content });
+      const res = await fetch(chatUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage.content }),
+        body: JSON.stringify({ resume_id: resumeId, message: userMessage.content }),
       });
 
       const data = await res.json();
@@ -98,8 +104,6 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
   // PDF RESUME UPLOAD
   // ------------------------------
   const handlePDFUpload = async (file: File) => {
-    if (!BACKEND_URL) return;
-
     if (file.type !== 'application/pdf') {
       alert('Only PDF resumes are supported.');
       return;
@@ -121,22 +125,42 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
     formData.append('file', file);
 
     try {
-      const res = await fetch(`${BACKEND_URL}/api/resume/analyze`, {
+      const analyzeUrl = `${BACKEND_URL}/api/resume/analyze`;
+      console.log('RESUME-AGENT: uploading resume to', analyzeUrl);
+      const res = await fetch(analyzeUrl, {
         method: 'POST',
         body: formData,
       });
 
       const data = await res.json();
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          role: 'agent',
-          content: data.summary || 'Resume uploaded successfully.',
-          timestamp: new Date(),
-        },
-      ]);
+      if (!res.ok) {
+        console.error('RESUME-AGENT: upload failed with status', res.status, data);
+        throw new Error('Upload failed');
+      }
+
+      // Store the resume_id from the backend response
+      setResumeId(data.resume_id);
+
+      // Update welcome message to indicate resume is ready
+      setMessages((prev) => {
+        const updatedMessages = [...prev];
+        if (updatedMessages[0].id === 'init') {
+          updatedMessages[0] = {
+            ...updatedMessages[0],
+            content: 'Resume uploaded. Ask anything about the candidate.',
+          };
+        }
+        return [
+          ...updatedMessages,
+          {
+            id: Date.now().toString(),
+            role: 'agent',
+            content: data.summary || 'Resume uploaded successfully.',
+            timestamp: new Date(),
+          },
+        ];
+      });
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -229,7 +253,7 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
 
         <button
           onClick={handleSend}
-          disabled={isTyping || !input.trim()}
+          disabled={isTyping || !input.trim() || !resumeId}
           className="px-4 py-2 bg-primary text-white rounded-lg disabled:opacity-50"
         >
           <Send className="w-5 h-5" />
