@@ -1,17 +1,15 @@
-import agentRouter from "./routes/agent";
+import dotenv from "dotenv";
+dotenv.config({ path: "./backend/.env" });
+
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
+
+import agentRouter from "./routes/agent";
 import resumeRouter from "./routes/resume";
 import llmRouter from "./routes/together";
 import modelsRouter from "./routes/models";
 
-dotenv.config();
-
-console.log("Environment loaded:");
-console.log("OPENROUTER_API_KEY:", process.env.OPENROUTER_API_KEY ? "SET" : "NOT SET");
-console.log("OPENROUTER_API_URL:", process.env.OPENROUTER_API_URL || "https://openrouter.ai/api/v1/chat/completions");
-console.log("OPENROUTER_MODEL:", process.env.OPENROUTER_MODEL || "mistralai/mistral-7b-instruct");
+import { initRedis } from "./services/redisClient";
 
 const app = express();
 // Try multiple ports to avoid conflicts
@@ -72,7 +70,33 @@ function startServer(portIndex: number = 0) {
   });
 }
 
-startServer();
+(async () => {
+  console.log("[BOOT] NODE_ENV:", process.env.NODE_ENV || "development");
+  console.log("[BOOT] REDIS_URL:", process.env.REDIS_URL ? "SET" : "NOT SET");
+  try {
+    await initRedis();
+
+    if (process.env.NODE_ENV !== "production") {
+      const { getRedis, isUsingRedis } = await import("./services/redisClient");
+
+      app.get("/redis-test", async (_req, res) => {
+        if (isUsingRedis()) {
+          const r = getRedis();
+          await r.set("resume_agent_test_ping", "pong");
+          const v = await r.get("resume_agent_test_ping");
+          return res.json({ redis: true, value: v ?? null });
+        }
+        return res.json({ redis: false, message: "Memory fallback active" });
+      });
+    }
+
+    startServer();
+  } catch (err) {
+    console.error("[BOOT] Failed to initialize required services. Exiting.", err);
+    process.exit(1);
+  }
+})();
+
 
 // Handle graceful shutdown
 process.on('SIGTERM', () => {

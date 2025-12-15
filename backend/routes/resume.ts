@@ -48,7 +48,7 @@ router.post("/analyze", upload.single("file"), async (req, res) => {
       const result = await analyzeResumePDF(req.file.buffer, req.body.kind);
 
       // Save resume text for chat context
-      saveResume(resume_id, result.extractedText);
+      await saveResume(resume_id, result.extractedText);
 
       return res.json({
         resume_id,
@@ -72,7 +72,7 @@ router.post("/analyze", upload.single("file"), async (req, res) => {
     const result = await analyzeResume({ text, kind });
 
     // Save resume text for chat context
-    saveResume(resume_id, result.extractedText);
+    await saveResume(resume_id, result.extractedText);
 
     return res.json({
       resume_id,
