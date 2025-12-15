@@ -5,9 +5,16 @@ import { Send, Loader2, Paperclip } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 
-const BACKEND_URL = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_BACKEND_URL
-  ? process.env.NEXT_PUBLIC_BACKEND_URL
-  : 'http://localhost:3000';
+/**
+ * Backend URL resolution
+ * - Uses env in prod
+ * - Falls back to localhost for dev
+ */
+const BACKEND_URL =
+  typeof process !== 'undefined' && process.env.NEXT_PUBLIC_BACKEND_URL
+    ? process.env.NEXT_PUBLIC_BACKEND_URL
+    : 'http://localhost:3000';
+
 console.log('RESUME-AGENT: BACKEND_URL =', BACKEND_URL);
 
 type ChatPanelProps = {
@@ -22,6 +29,9 @@ interface Message {
 }
 
 export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
+  /**
+   * Chat messages
+   */
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'init',
@@ -34,20 +44,44 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
 
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+
+  /**
+   * resumeId is UI/session identity only
+   */
   const [resumeId, setResumeId] = useState<string | null>(null);
+
+  /**
+   * ❗ CRITICAL FIX ❗
+   * Resume text must NOT live only in React state.
+   * React state can reset on re-render, animation, hydration, etc.
+   *
+   * useRef survives renders and is safe for critical data.
+   */
+  const resumeTextRef = useRef<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  /**
+   * Auto-scroll on new messages
+   */
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // ------------------------------
+  // --------------------------------------------------
   // SEND CHAT MESSAGE
-  // ------------------------------
+  // --------------------------------------------------
   const handleSend = async () => {
     if (!input.trim() || isTyping || !resumeId) return;
+
+    const resumeTextToSend = resumeTextRef.current;
+
+    // Hard guard — should never happen, but explicit is better
+    if (!resumeTextToSend) {
+      console.error('resumeText missing at send time');
+      return;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -62,11 +96,15 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
 
     try {
       const chatUrl = `${BACKEND_URL}/api/agent/chat`;
-      console.log('RESUME-AGENT: sending chat to', chatUrl, 'body=', { resume_id: resumeId, message: userMessage.content });
+
       const res = await fetch(chatUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resume_id: resumeId, message: userMessage.content }),
+        body: JSON.stringify({
+          resume_id: resumeId,
+          resume_text: resumeTextRef.current, // stateless context
+          message: userMessage.content,
+        }),
       });
 
       const data = await res.json();
@@ -76,20 +114,22 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
         {
           id: (Date.now() + 1).toString(),
           role: 'agent',
-          content: data.response || 'No response generated.',
+          // FIX: show backend error if present
+          content: data.response ?? data.error ?? 'No response generated.',
           timestamp: new Date(),
         },
       ]);
 
-      // Optional project highlight hook (safe)
+
       if (data.projectId) {
         onHighlightProject?.(data.projectId);
       }
-    } catch {
+    } catch (err) {
+      console.error(err);
       setMessages((prev) => [
         ...prev,
         {
-          id: 'error',
+          id: Date.now().toString(),
           role: 'agent',
           content: '❌ Failed to reach the agent.',
           timestamp: new Date(),
@@ -100,9 +140,9 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
     }
   };
 
-  // ------------------------------
+  // --------------------------------------------------
   // PDF RESUME UPLOAD
-  // ------------------------------
+  // --------------------------------------------------
   const handlePDFUpload = async (file: File) => {
     if (file.type !== 'application/pdf') {
       alert('Only PDF resumes are supported.');
@@ -126,7 +166,7 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
 
     try {
       const analyzeUrl = `${BACKEND_URL}/api/resume/analyze`;
-      console.log('RESUME-AGENT: uploading resume to', analyzeUrl);
+
       const res = await fetch(analyzeUrl, {
         method: 'POST',
         body: formData,
@@ -135,24 +175,29 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
       const data = await res.json();
 
       if (!res.ok) {
-        console.error('RESUME-AGENT: upload failed with status', res.status, data);
+        console.error('Upload failed:', data);
         throw new Error('Upload failed');
       }
 
-      // Store the resume_id from the backend response
+      /**
+       * Store BOTH:
+       * - resumeId → UI identity
+       * - resumeTextRef → chat context (persistent)
+       */
       setResumeId(data.resume_id);
+      resumeTextRef.current = data.extracted_text;
 
-      // Update welcome message to indicate resume is ready
       setMessages((prev) => {
-        const updatedMessages = [...prev];
-        if (updatedMessages[0].id === 'init') {
-          updatedMessages[0] = {
-            ...updatedMessages[0],
+        const updated = [...prev];
+        if (updated[0]?.id === 'init') {
+          updated[0] = {
+            ...updated[0],
             content: 'Resume uploaded. Ask anything about the candidate.',
           };
         }
+
         return [
-          ...updatedMessages,
+          ...updated,
           {
             id: Date.now().toString(),
             role: 'agent',
@@ -161,7 +206,8 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
           },
         ];
       });
-    } catch {
+    } catch (err) {
+      console.error(err);
       setMessages((prev) => [
         ...prev,
         {
@@ -176,6 +222,9 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
     }
   };
 
+  // --------------------------------------------------
+  // UI
+  // --------------------------------------------------
   return (
     <div className="flex flex-col h-full rounded-xl border bg-card">
       {/* Messages */}
@@ -199,9 +248,7 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
               >
                 {msg.role === 'agent' ? (
                   <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <ReactMarkdown>
-                      {msg.content}
-                    </ReactMarkdown>
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
                   </div>
                 ) : (
                   msg.content
@@ -221,7 +268,7 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
+      {/* Input */}
       <div className="p-4 border-t flex gap-2">
         <input
           type="file"
@@ -253,7 +300,7 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
 
         <button
           onClick={handleSend}
-          disabled={isTyping || !input.trim() || !resumeId}
+          disabled={isTyping || !input.trim() || !resumeId || !resumeTextRef.current}
           className="px-4 py-2 bg-primary text-white rounded-lg disabled:opacity-50"
         >
           <Send className="w-5 h-5" />
