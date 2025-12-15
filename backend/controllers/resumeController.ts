@@ -4,57 +4,66 @@ import { extractTextFromPDF, validatePDFFile } from "../services/pdfService";
 import fs from "fs";
 import path from "path";
 
-export async function analyzeResume(params: GenerateParams): Promise<AnalysisResult> {
-  // Input validation
-  if (!params.text || typeof params.text !== 'string' || params.text.trim().length === 0) {
+/**
+ * FIX: Normalize extracted resume text so:
+ * - words are not glued
+ * - sections like Skills / Experience are detectable
+ * - downstream chat works reliably
+ */
+function normalizeResumeText(raw: string): string {
+  return raw
+    // Fix glued words: AaravMehta → Aarav Mehta, KIITUniversity → KIIT University
+    .replace(/([A-Z])([A-Z][a-z])/g, "$1 $2")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+
+    // Fix commas without space
+    .replace(/,([A-Za-z])/g, ", $1")
+
+    // Fix pipes
+    .replace(/\|/g, " | ")
+
+    // Fix bullets
+    .replace(/-\s*/g, "- ")
+
+    // Normalize whitespace
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+
+    .trim();
+}
+
+
+export async function analyzeResume(
+  params: GenerateParams
+): Promise<AnalysisResult> {
+  if (!params.text || typeof params.text !== "string") {
     throw new Error("Invalid input: text must be a non-empty string");
   }
 
-  const result = await generateSummary(params.text, params.kind);
+  // FIX: normalize text ONCE
+  const normalizedText = normalizeResumeText(params.text);
 
-  // Save extracted text to data file for chat functionality
-  const resumeDataPath = path.join(process.cwd(), "data/raw/resume-content.json");
-  const resumeData = {
-    extracted_text: params.text,
-    source: "text-input",
-    extracted_at: new Date().toISOString(),
-    metadata: {
-      uploadedAt: new Date().toISOString()
-    }
-  };
-
-  // Ensure directory exists
-  const dir = path.dirname(resumeDataPath);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-
-  fs.writeFileSync(resumeDataPath, JSON.stringify(resumeData, null, 2));
+  const result = await generateSummary(normalizedText, params.kind);
 
   const analysisResult: AnalysisResult = {
     summary: result.summary,
-    inputLength: params.text.length,
+    inputLength: normalizedText.length,
     engine: result.engine,
     timestamp: new Date().toISOString(),
-    extractedText: params.text,
+    extractedText: normalizedText, // FIX: normalized
   };
 
-  // Add model info if available
-  if (result.model) {
-    analysisResult.model = result.model;
-  }
-
-  // Add response time if available
-  if (result.responseTime) {
-    analysisResult.responseTime = result.responseTime;
-  }
+  if (result.model) analysisResult.model = result.model;
+  if (result.responseTime) analysisResult.responseTime = result.responseTime;
 
   return analysisResult;
 }
 
-export async function analyzeResumePDF(pdfBuffer: Buffer, kind?: string): Promise<AnalysisResult> {
+
+export async function analyzeResumePDF(pdfBuffer: Buffer, kind?: string): Promise<AnalysisResult> 
+{
   // Validate PDF
-  if (!pdfBuffer || !(pdfBuffer instanceof Buffer) || pdfBuffer.length === 0) {
+  if (!pdfBuffer || !validatePDFFile(pdfBuffer) || pdfBuffer.length === 0) {
     throw new Error("Invalid PDF file. Please upload a valid PDF document.");
   }
 
@@ -64,45 +73,29 @@ export async function analyzeResumePDF(pdfBuffer: Buffer, kind?: string): Promis
 
   // Extract text from PDF
   const pdfResult = await extractTextFromPDF(pdfBuffer);
+  const normalizedText = normalizeResumeText(pdfResult.text);
 
-  // Validate extracted text has meaningful content
-  if (!pdfResult.text || pdfResult.text.trim().length < 50) {
-    throw new Error("PDF extraction failed or resume appears to be empty/corrupted. Please ensure the PDF contains readable text content.");
+  
+  if (!normalizedText || normalizedText.length < 50) {
+  throw new Error("PDF extraction failed or resume is empty.");
   }
-
-  // Save extracted text to data file for chat functionality
-  const resumeDataPath = path.join(process.cwd(), "data/raw/resume-content.json");
-  const resumeData = {
-    extracted_text: pdfResult.text,
-    source: "pdf-upload",
-    extracted_at: pdfResult.extractedAt,
-    metadata: {
-      pageCount: pdfResult.pageCount,
-      uploadedAt: new Date().toISOString()
-    }
-  };
-
-  // Ensure directory exists
-  const dir = path.dirname(resumeDataPath);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-
-  fs.writeFileSync(resumeDataPath, JSON.stringify(resumeData, null, 2));
+  
 
   // Generate summary using existing LLM service
-  const result = await generateSummary(pdfResult.text, kind);
+  const result = await generateSummary(normalizedText, kind);
 
-  const analysisResult: AnalysisResult = {
+  const analysisResult: AnalysisResult = 
+  {
     summary: result.summary,
-    inputLength: pdfResult.text.length,
+    inputLength: normalizedText.length,
     engine: result.engine,
     timestamp: new Date().toISOString(),
-    pdfInfo: {
+    pdfInfo: 
+    {
       pageCount: pdfResult.pageCount,
       extractedAt: pdfResult.extractedAt,
     },
-    extractedText: pdfResult.text,
+    extractedText: normalizedText, // FIX
   };
 
   // Add model info if available

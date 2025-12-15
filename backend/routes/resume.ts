@@ -1,74 +1,83 @@
 import { Router } from "express";
 import multer from "multer";
-import { analyzeResume, analyzeResumePDF } from "../controllers/resumeController";
-import { storeResume } from "../services/resumeService";
-import { randomUUID } from 'crypto';
+import { randomUUID } from "crypto";
+import {
+  analyzeResume,
+  analyzeResumePDF,
+} from "../controllers/resumeController";
 
 const router = Router();
 
-// Configure multer for PDF uploads
+/**
+ * Multer config:
+ * - In-memory only (Vercel-safe)
+ * - PDF only
+ * - Max 10MB
+ */
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype === "application/pdf") cb(null, true);
+    else cb(new Error("Only PDF files are allowed"));
   },
-  fileFilter: (req, file, cb) => {
-    // Allow only PDF files
-    if (file.mimetype === 'application/pdf') {
-      cb(null, true);
-    } else {
-      cb(new Error('Only PDF files are allowed'));
-    }
-  }
 });
 
-// POST /api/resume/analyze
-router.post("/analyze", upload.single('file'), async (req, res) => {
+/**
+ * POST /api/resume/analyze
+ *
+ * Accepts:
+ * - multipart/form-data (PDF upload)
+ * - OR JSON text input (optional / legacy)
+ *
+ * Returns:
+ * - resume_id
+ * - summary
+ * - extracted_text (NORMALIZED, chat-ready)
+ */
+router.post("/analyze", upload.single("file"), async (req, res) => {
   try {
-    let resume_id: string;
-    let extractedText: string;
-    let pdfInfo: any;
+    const resume_id = req.body.resume_id || randomUUID();
 
-    // Check if this is a PDF upload or JSON text
-    let result: any;
+    // -----------------------------
+    // PDF UPLOAD PATH
+    // -----------------------------
     if (req.file) {
-      // Handle PDF upload
-      const { kind, resume_id: providedResumeId } = req.body;
-      resume_id = providedResumeId || randomUUID();
-      result = await analyzeResumePDF(req.file.buffer, kind);
-      extractedText = result.extractedText;
-      pdfInfo = result.pdfInfo;
-    } else {
-      // Handle JSON text (existing behavior)
-      const { text, kind, resume_id: providedResumeId } = req.body;
-      if (!text || typeof text !== "string") {
-        return res.status(400).json({ error: "Missing or invalid 'text' in body" });
-      }
-      resume_id = providedResumeId || randomUUID();
-      result = await analyzeResume({ text, kind });
-      extractedText = text;
-      pdfInfo = result.pdfInfo;
+      const result = await analyzeResumePDF(req.file.buffer, req.body.kind);
+
+      return res.json({
+        resume_id,
+        summary: result.summary,
+        extracted_text: result.extractedText, // ✅ normalized
+        extractedLength: result.extractedText.length,
+        pdfInfo: result.pdfInfo,
+      });
     }
 
-    // Store resume data
-    const record = storeResume(resume_id, extractedText, { pdfInfo });
+    // -----------------------------
+    // TEXT INPUT PATH (fallback)
+    // -----------------------------
+    const { text, kind } = req.body;
 
-    const response: any = {
-      resume_id: record.resume_id,
-      version: record.version,
-      pdfInfo: record.pdfInfo,
-      extractedLength: extractedText.length,
-      extracted_text: extractedText, // Include for stateless chat
-    };
-
-    if (req.file) {
-      response.summary = result.summary;
+    if (!text || typeof text !== "string") {
+      return res
+        .status(400)
+        .json({ error: "Missing or invalid resume text" });
     }
 
-    return res.json(response);
+    const result = await analyzeResume({ text, kind });
+
+    return res.json({
+      resume_id,
+      summary: result.summary,
+      extracted_text: result.extractedText, // ✅ normalized
+      extractedLength: result.extractedText.length,
+    });
   } catch (err: any) {
-    console.error("Error in /api/resume/analyze", err);
-    return res.status(500).json({ error: err?.message || String(err) });
+    console.error("Error in /api/resume/analyze:", err);
+    return res.status(500).json({
+      error: err.message || "Failed to analyze resume",
+    });
   }
 });
 
