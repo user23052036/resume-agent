@@ -4,31 +4,14 @@ import { extractTextFromPDF, validatePDFFile } from "../services/pdfService";
 import fs from "fs";
 import path from "path";
 
-/**
- * FIX: Normalize extracted resume text so:
- * - words are not glued
- * - sections like Skills / Experience are detectable
- * - downstream chat works reliably
- */
 function normalizeResumeText(raw: string): string {
   return raw
-    // Fix glued words: AaravMehta → Aarav Mehta, KIITUniversity → KIIT University
-    .replace(/([A-Z])([A-Z][a-z])/g, "$1 $2")
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-
-    // Fix commas without space
-    .replace(/,([A-Za-z])/g, ", $1")
-
-    // Fix pipes
-    .replace(/\|/g, " | ")
-
-    // Fix bullets
-    .replace(/-\s*/g, "- ")
-
-    // Normalize whitespace
+    .replace(/([a-z])([A-Z])/g, "$1 $2")                 // split glued words
+    .replace(/(Summary|Skills|Experience|Projects|Education|Professional Summary)([-:])/gi, "\n$1:\n")
+    .replace(/-\s*/g, "\n- ")                            // normalize bullets
+    .replace(/([.,:;])([A-Za-z])/g, "$1 $2")             // punctuation spacing
     .replace(/[ \t]+/g, " ")
     .replace(/\n{3,}/g, "\n\n")
-
     .trim();
 }
 

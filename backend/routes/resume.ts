@@ -5,6 +5,7 @@ import {
   analyzeResume,
   analyzeResumePDF,
 } from "../controllers/resumeController";
+import { saveResume } from "../services/resumeStore";
 
 const router = Router();
 
@@ -33,7 +34,8 @@ const upload = multer({
  * Returns:
  * - resume_id
  * - summary
- * - extracted_text (NORMALIZED, chat-ready)
+ * - extractedLength
+ * - pdfInfo (for PDF uploads)
  */
 router.post("/analyze", upload.single("file"), async (req, res) => {
   try {
@@ -45,10 +47,12 @@ router.post("/analyze", upload.single("file"), async (req, res) => {
     if (req.file) {
       const result = await analyzeResumePDF(req.file.buffer, req.body.kind);
 
+      // Save resume text for chat context
+      saveResume(resume_id, result.extractedText);
+
       return res.json({
         resume_id,
         summary: result.summary,
-        extracted_text: result.extractedText, // ✅ normalized
         extractedLength: result.extractedText.length,
         pdfInfo: result.pdfInfo,
       });
@@ -67,10 +71,12 @@ router.post("/analyze", upload.single("file"), async (req, res) => {
 
     const result = await analyzeResume({ text, kind });
 
+    // Save resume text for chat context
+    saveResume(resume_id, result.extractedText);
+
     return res.json({
       resume_id,
       summary: result.summary,
-      extracted_text: result.extractedText, // ✅ normalized
       extractedLength: result.extractedText.length,
     });
   } catch (err: any) {

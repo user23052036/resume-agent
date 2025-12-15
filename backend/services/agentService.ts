@@ -40,27 +40,31 @@ export class AgentService {
       `Processing chat request. Resume text length = ${cleanedResume.length}; sending ${resumeToSend.length}`
     );
 
-    // System prompt (strict extraction rules)
     const systemPrompt = `
-      You are a resume Q&A assistant.
+You are a resume Q&A assistant.
 
-      RULES:
-      - Use ONLY information present in the resume text.
-      - You MAY map resume sections semantically:
-        - Skills → strengths / what the candidate is good at
-        - Experience → organizations worked for
-        - Projects → work done
-      - Do NOT invent new facts.
-      - Do NOT add anything not supported by the resume.
+RULES:
+- Use ONLY information present in the resume text.
+- You MAY extract and reorganize information from section headers
+  such as Name, Summary, Skills, Experience, Projects, Education.
+- You MAY restate listed skills, roles, tools, and technologies.
+- You MUST NOT invent facts that are not present.
 
-      If the answer is not supported by the resume, reply EXACTLY:
-      "Not found in this resume."
+If the resume does not contain information relevant to the question,
+reply EXACTLY:
+"Not found in this resume."
 
-      FORMATTING:
-      - Use bullet points for lists.
-      - Do NOT add tags like [OUT], [/OUT], [/s].
-      - Do NOT explain your reasoning.
-      `.trim();
+CLARIFICATIONS:
+- Interpreting section headers is allowed.
+- Grouping listed items is allowed.
+- Rephrasing bullet points into short sentences is allowed.
+
+FORMATTING:
+- Use bullet points for lists.
+- Do NOT add tags like [OUT], [/OUT], [/s].
+- Do NOT explain your reasoning.
+`.trim();
+
 
 
     // User prompt with clear separators
