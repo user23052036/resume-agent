@@ -19,6 +19,7 @@ export interface AnalysisResult
   pdfInfo?: PDFInfo;
   model?: string;
   responseTime?: number;
+  extractedText: string;
 }
 
 export interface ModelResponse

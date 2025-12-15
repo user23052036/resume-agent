@@ -36,6 +36,7 @@ export async function analyzeResume(params: GenerateParams): Promise<AnalysisRes
     inputLength: params.text.length,
     engine: result.engine,
     timestamp: new Date().toISOString(),
+    extractedText: params.text,
   };
 
   // Add model info if available
@@ -100,7 +101,8 @@ export async function analyzeResumePDF(pdfBuffer: Buffer, kind?: string): Promis
     pdfInfo: {
       pageCount: pdfResult.pageCount,
       extractedAt: pdfResult.extractedAt,
-    }
+    },
+    extractedText: pdfResult.text,
   };
 
   // Add model info if available

@@ -2,6 +2,61 @@ import { callOpenRouterLLMWithResponse } from "../adapters/openrouterAdapter";
 import { ModelResponse } from "../types";
 import { modelRanker } from "./modelRanker";
 
+interface ResumeRecord {
+  resume_id: string;
+  version: number;
+  extracted_text: string;
+  pdfInfo?: any;
+  extractedAt: string;
+}
+
+// In-memory storage for resume data
+const resumeStore = new Map<string, ResumeRecord>();
+
+/**
+ * Store resume data with resume_id and version
+ */
+export function storeResume(resume_id: string, text: string, metadata: { pdfInfo?: any } = {}): ResumeRecord {
+  const existing = resumeStore.get(resume_id);
+  const version = existing ? existing.version + 1 : 1;
+
+  const record: ResumeRecord = {
+    resume_id,
+    version,
+    extracted_text: text,
+    pdfInfo: metadata.pdfInfo,
+    extractedAt: new Date().toISOString()
+  };
+
+  resumeStore.set(resume_id, record);
+  return record;
+}
+
+/**
+ * Get resume data by resume_id and optional version
+ */
+export function getResume(resume_id: string, version?: number): ResumeRecord | null {
+  const record = resumeStore.get(resume_id);
+  if (!record) return null;
+
+  // If version specified and doesn't match current, return null (versioning not implemented for retrieval)
+  if (version && record.version !== version) return null;
+
+  return record;
+}
+
+/**
+ * Bump version for existing resume_id (for cache invalidation)
+ */
+export function bumpVersion(resume_id: string): boolean {
+  const record = resumeStore.get(resume_id);
+  if (!record) return false;
+
+  record.version += 1;
+  resumeStore.set(resume_id, record);
+  return true;
+}
+
 /**
  * Generate a summary using OpenRouter LLM when configured,
  * otherwise fall back to a heuristic local summarizer.
