@@ -1,49 +1,57 @@
-import fs from "fs";
-import path from "path";
 import { callOpenRouterLLM } from "../adapters/openrouterAdapter";
 
-interface ResumeRecord {
-  resume_id: string;
-  version: number;
-  extracted_text: string;
-  pdfInfo?: any;
-  extractedAt: string;
-}
-
 export class AgentService {
-  static isReady(): boolean {
-    return true;
-  }
-
-  static getAvailableRoles(): string[] {
-    return [
-      "backend-engineer",
-      "frontend-engineer",
-      "full-stack-developer",
-      "devops-engineer",
-    ];
-  }
-
-  static async chat(message: string, resumeRecord: ResumeRecord): Promise<string> {
-    const resumeText = resumeRecord.extracted_text;
-
-    // Validate resume text
-    if (!resumeText || typeof resumeText !== 'string' || resumeText.trim().length < 10) {
-      console.error("Invalid resume text:", resumeText);
-      throw new Error("Resume content appears to be empty or invalid. Please re-upload your resume PDF.");
+  /**
+   * Stateless chat handler.
+   * Resume context is provided per request (Vercel-safe).
+   */
+  static async chat(message: string, resumeText: string): Promise<string> {
+    // Defensive guard — never throw here (breaks UX)
+    if (!resumeText || resumeText.trim().length < 10) {
+      console.warn("AgentService.chat called with empty resume text");
+      return "Not found in this resume.";
     }
 
-    console.log(`Processing chat request with resume text length: ${resumeText.length}`);
+    console.log(
+      `Processing chat request. Resume text length = ${resumeText.length}`
+    );
 
-    const systemPrompt = `You are a resume Q&A assistant. Use ONLY the resume content provided in \`resume_id: ${resumeRecord.resume_id}\`. If the answer cannot be found in that resume, respond exactly: 'Not found in this resume ${resumeRecord.resume_id}.' Do not guess or include content from any other resume.`;
+    /**
+     * System prompt:
+     * - Hard constraint: ONLY use provided resume
+     * - Deterministic fallback response
+     */
+      const systemPrompt = `
+      You are a resume Q&A assistant.
 
-    const userPrompt = `QUESTION: ${message}
+      STRICT RULES:
+      - Answer ONLY using facts explicitly written in the resume text.
+      - Do NOT infer strengths, weaknesses, timelines, or experience.
+      - Do NOT summarize or rephrase beyond what is written.
+      - Do NOT guess.
 
-Context: ${JSON.stringify({
-      resume_id: resumeRecord.resume_id,
-      resume_text: resumeText,
-      resume_version: resumeRecord.version
-    })}`;
+      If the answer is not explicitly present in the resume, reply EXACTLY:
+      "Not found in this resume."
+
+      FORMATTING RULES:
+      - Use bullet points for lists.
+      - Do NOT add tags like [OUT], [/OUT], [/s], or similar.
+      - Do NOT explain your reasoning.
+      `.trim();
+
+
+    /**
+     * User prompt:
+     * - Plain text (avoid JSON noise)
+     * - Clear separation between question and context
+     */
+    const userPrompt = `
+QUESTION:
+${message}
+
+RESUME CONTENT:
+${resumeText.trim()}
+`.trim();
 
     const response = await callOpenRouterLLM(
       userPrompt,
@@ -51,6 +59,8 @@ Context: ${JSON.stringify({
       "resume-chat",
       {}
     );
-    return response ?? `Not found in this resume ${resumeRecord.resume_id}.`;
+
+    // Always return a string — never undefined
+    return response || "Not found in this resume.";
   }
 }

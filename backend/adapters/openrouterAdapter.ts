@@ -18,15 +18,20 @@ async function sleep(ms: number) {
  */
 function cleanLLMOutput(text: string): string {
   return text
-    .replace(/<\/?s>/gi, "")        // remove <s> </s>
-    .replace(/^\s+|\s+$/g, "")     // trim
-    .replace(/\n{3,}/g, "\n\n");   // normalize spacing
+    .replace(/<\/?s>/gi, "")
+    .replace(/\[(\/)?OUT\]/gi, "")
+    .replace(/\[\/?s\]/gi, "")
+    .replace(/^\s+|\s+$/g, "")
+    .replace(/\n{3,}/g, "\n\n");
 }
+
 
 /**
  * Call OpenRouter Chat Completion API
  * ALWAYS returns a clean string or throws
  */
+
+
 export async function callOpenRouterLLM(
   userMessage: string,
   systemPrompt: string,
