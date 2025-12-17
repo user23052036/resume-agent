@@ -107,7 +107,8 @@ export async function callOpenRouterLLM(
       const cleaned = cleanLLMOutput(content);
 
       if (!cleaned) {
-        throw new Error("Empty response after cleaning");
+        console.warn("OpenRouter returned content that became empty after cleaning. Raw response:", rawText);
+        return "I couldn't generate a clear answer. Please try rephrasing.";
       }
 
       return cleaned;
