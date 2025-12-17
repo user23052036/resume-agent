@@ -6,6 +6,12 @@ const router = Router();
 
 // POST /api/agent/chat
 router.post("/chat", async (req, res) => {
+  console.log("CHAT BODY RECEIVED", req.body);
+  console.log("CHAT BODY TYPES", {
+    resume_id: typeof req.body?.resume_id,
+    message: typeof req.body?.message
+  });
+
   try {
     const { resume_id, message } = req.body;
 

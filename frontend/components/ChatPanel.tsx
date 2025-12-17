@@ -73,6 +73,13 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
     try {
       const chatUrl = `${API_BASE}/api/agent/chat`;
 
+      console.log("CHAT PAYLOAD SENT", {
+        resume_id: resumeId,
+        message: userMessage.content,
+        typeof_resume_id: typeof resumeId,
+        typeof_message: typeof userMessage.content
+      });
+
       const res = await fetch(chatUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
