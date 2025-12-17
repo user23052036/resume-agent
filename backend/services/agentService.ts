@@ -23,32 +23,33 @@ export class AgentService {
    * Resume context is provided per request (Vercel-safe).
    */
   static async chat(message: string, resumeText: string): Promise<string> {
-    // Defensive guard — never throw here (breaks UX)
-    if (!resumeText || resumeText.trim().length < 5) {
-      console.warn("AgentService.chat called with empty or tiny resume text");
-      return "Not found in this resume.";
+    // Robust resume content safety guard
+    const cleanedResume = resumeText?.trim() || "";
+    if (!cleanedResume) {
+      return "The resume content could not be read or is empty.";
     }
 
     // FIX: truncate resume to a safe maximum size before sending to LLM
-    const cleanedResume = resumeText.trim();
     const resumeToSend =
       cleanedResume.length > MAX_RESUME_CHARS
         ? cleanedResume.slice(0, MAX_RESUME_CHARS)
         : cleanedResume;
 
-    console.log(
-      `Processing chat request. Resume text length = ${cleanedResume.length}; sending ${resumeToSend.length}`
-    );
-
     const systemPrompt = `
 You are a resume Q&A assistant.
 
 RULES:
-- Use ONLY information present in the resume text.
-- You MAY extract and reorganize information from section headers
-  such as Name, Summary, Skills, Experience, Projects, Education.
-- You MAY restate listed skills, roles, tools, and technologies.
-- You MUST NOT invent facts that are not present.
+- You MUST NOT return empty or whitespace-only responses.
+- Answer ONLY using information from the resume.
+- If the information is missing, explicitly say so.
+- When listing skills, ALWAYS use bullet points.
+- Keep answers concise and factual.
+- Do NOT hallucinate or invent details.
+
+RESUME CONTEXT:
+===== RESUME START =====
+${resumeToSend}
+===== RESUME END =====
 
 If the resume does not contain information relevant to the question,
 reply EXACTLY:
@@ -83,12 +84,6 @@ ${resumeToSend}
         "resume-chat",
         {}
       );
-
-      // If the LLM returns empty/undefined, use strict fallback
-      if (!response || typeof response !== "string" || response.trim().length === 0) {
-        console.warn("LLM returned empty response; returning strict fallback");
-        return "Not found in this resume.";
-      }
 
       // Cleaned response passes back to the caller
       return response.trim();

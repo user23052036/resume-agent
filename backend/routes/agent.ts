@@ -16,7 +16,7 @@ router.post("/chat", async (req, res) => {
     const { resume_id, message } = req.body;
 
     if (!resume_id || typeof resume_id !== "string") {
-      return res.status(400).json({ error: "resume_id is required" });
+      return res.json({ response: "Please upload a resume before asking questions." });
     }
 
     if (!message || typeof message !== "string") {

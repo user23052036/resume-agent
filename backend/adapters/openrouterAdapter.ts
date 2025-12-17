@@ -108,7 +108,20 @@ export async function callOpenRouterLLM(
 
       if (!cleaned) {
         console.warn("OpenRouter returned content that became empty after cleaning. Raw response:", rawText);
-        return "I couldn't generate a clear answer. Please try rephrasing.";
+        
+        // Retry once with stronger system prompt if this is the first attempt
+        if (attempt === 0) {
+          const strongerSystemPrompt = systemPrompt + "\n\nIMPORTANT: You MUST return a non-empty answer. Answer ONLY from the resume. If the resume lacks the information, say so clearly.";
+          
+          return await callOpenRouterLLM(
+            userMessage,
+            strongerSystemPrompt,
+            purpose,
+            { ...opts, retries: 0 } // Prevent infinite recursion
+          );
+        }
+        
+        return "The resume does not contain enough information to answer this question.";
       }
 
       return cleaned;
