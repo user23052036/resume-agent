@@ -28,13 +28,12 @@ router.post("/chat", async (req, res) => {
     const response = await AgentService.chat(message, resumeText);
     res.json({ response });
   } catch (err: any) {
-  console.error("Agent chat error:", err);
+    console.error("Agent chat error:", err);
 
-  return res.json({
-    response: "Not found in this resume.",
-    error: err?.message,
-  });
-}
+    return res.json({
+      response: "Not found in this resume."
+    });
+  }
 });
 
 export default router;
