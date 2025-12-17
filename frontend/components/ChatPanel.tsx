@@ -12,12 +12,9 @@ import ReactMarkdown from 'react-markdown';
  * - Uses env in prod
  * - Falls back to localhost for dev
  */
-const BACKEND_URL =
-  typeof process !== 'undefined' && process.env.NEXT_PUBLIC_BACKEND_URL
-    ? process.env.NEXT_PUBLIC_BACKEND_URL
-    : 'http://localhost:3000';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
-console.log('RESUME-AGENT: BACKEND_URL =', BACKEND_URL);
+console.log('RESUME-AGENT: API_BASE =', API_BASE);
 
 type ChatPanelProps = {
   onHighlightProject?: (projectId: string) => void;
@@ -74,7 +71,7 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
     setIsTyping(true);
 
     try {
-      const chatUrl = `${BACKEND_URL}/api/agent/chat`;
+      const chatUrl = `${API_BASE}/api/agent/chat`;
 
       const res = await fetch(chatUrl, {
         method: 'POST',
@@ -141,7 +138,7 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
     formData.append('file', file);
 
     try {
-      const analyzeUrl = `${BACKEND_URL}/api/resume/analyze`;
+      const analyzeUrl = `${API_BASE}/api/resume/analyze`;
 
       const res = await fetch(analyzeUrl, {
         method: 'POST',
@@ -204,7 +201,7 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         <AnimatePresence>
-          {messages.map((msg) => (
+          {messages.map((msg: Message) => (
             <motion.div
               key={msg.id}
               initial={{ opacity: 0, y: 6 }}
@@ -247,7 +244,7 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
           accept="application/pdf"
           hidden
           ref={fileInputRef}
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             const file = e.target.files?.[0];
             if (file) handlePDFUpload(file);
           }}
@@ -263,8 +260,8 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
 
         <input
           value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInput(e.target.value)}
+          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && handleSend()}
           placeholder="Ask about skills, projects, experience..."
           className="flex-1 px-3 py-2 border rounded-lg"
           disabled={isTyping}

@@ -11,20 +11,28 @@ export async function initRedis(): Promise<void> {
     if (nodeEnv === "production") {
       throw new Error("REDIS_URL is required in production");
     }
-    console.warn("[REDIS] REDIS_URL missing — using memory store (dev only)");
+    console.warn("[REDIS] REDIS_URL missing — Redis required for resume storage");
     usingRedis = false;
     return;
   }
 
   try {
+    const isTLS = redisUrl.startsWith("rediss://");
+
     redisClient = createClient({
       url: redisUrl,
-      socket: {
-        connectTimeout: 10000,
-        tls: true,
-        rejectUnauthorized: true
-      }
+      socket: isTLS
+        ? {
+            tls: true,
+            rejectUnauthorized: true,
+            connectTimeout: 10000,
+          }
+        : {
+            connectTimeout: 10000,
+          },
     });
+
+
     await redisClient.connect();
     usingRedis = true;
     console.log("[REDIS] connected");
@@ -32,7 +40,7 @@ export async function initRedis(): Promise<void> {
     if (nodeEnv === "production") {
       throw err;
     }
-    console.warn("[REDIS] connection failed, using memory fallback (dev only)");
+    console.warn("[REDIS] connection failed — Redis required for resume storage");
     usingRedis = false;
     redisClient = null;
   }
