@@ -27,7 +27,7 @@ router.post("/chat", async (req, res) => {
     const resumeText = await getResume(resume_id);
     if (!resumeText) {
       return res.status(404).json({
-        error: "Resume context expired. Please re-upload the resume."
+        error: "Resume context expired. Please re-upload your resume."
       });
     }
 
