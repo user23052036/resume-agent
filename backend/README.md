@@ -12,7 +12,7 @@ A Node.js/Express backend service for AI-powered resume and portfolio analysis. 
 
 ## Environment Setup
 
-Create a `.env` file at the repository root:
+Create a `.env` file at repository root:
 
 ```bash
 PORT=3000
@@ -80,6 +80,12 @@ curl -X POST http://localhost:3000/api/resume/analyze \
 }
 ```
 
+**Status Codes:**
+
+- `200` - Success
+- `400` - Invalid request (missing text/file, invalid PDF)
+- `500` - Server error
+
 ### LLM Testing
 
 - `POST /api/llm/test` - Test OpenRouter LLM endpoint
@@ -111,7 +117,7 @@ curl -X POST http://localhost:3000/api/resume/analyze \
 
 - **`resumeService.ts`** - Core resume analysis logic and LLM integration
 - **`pdfService.ts`** - PDF text extraction and validation
-- **`integrations.ts`** - External service integrations
+- **`integrations.ts`** - External service integrations (placeholder)
 
 ### Controllers
 
@@ -179,10 +185,11 @@ backend/
 ├── controllers/        # Request handlers
 ├── mock/              # Testing mocks
 ├── routes/            # API route definitions
-├── services/          # Business logic
+├── services/          # Business logic services
 ├── types.ts           # TypeScript type definitions
 ├── index.ts           # Main server entry point
 ├── cli-test.ts        # CLI testing utility
+├── .env.example          # Environment template
 └── README.md          # This file
 ```
 

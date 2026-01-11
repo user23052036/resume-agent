@@ -1,17 +1,12 @@
 import { Router } from "express";
 import { AgentService } from "../services/agentService";
 import { getResume } from "../services/resumeStore";
+import { handleRouteError } from "../utils/responseHelper";
 
 const router = Router();
 
 // POST /api/agent/chat
 router.post("/chat", async (req, res) => {
-  console.log("CHAT BODY RECEIVED", req.body);
-  console.log("CHAT BODY TYPES", {
-    resume_id: typeof req.body?.resume_id,
-    message: typeof req.body?.message
-  });
-
   try {
     const { resume_id, message } = req.body;
 
@@ -34,11 +29,7 @@ router.post("/chat", async (req, res) => {
     const response = await AgentService.chat(message, resumeText);
     res.json({ response });
   } catch (err: any) {
-    console.error("Agent chat error:", err);
-
-    return res.json({
-      response: "Not found in this resume."
-    });
+    handleRouteError(res, err, "Agent chat");
   }
 });
 

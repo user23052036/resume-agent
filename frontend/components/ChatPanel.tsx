@@ -14,8 +14,6 @@ import ReactMarkdown from 'react-markdown';
  */
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
-console.log('RESUME-AGENT: API_BASE =', API_BASE);
-
 type ChatPanelProps = {
   onHighlightProject?: (projectId: string) => void;
 };
@@ -73,13 +71,6 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
     try {
       const chatUrl = `${API_BASE}/api/agent/chat`;
 
-      console.log("CHAT PAYLOAD SENT", {
-        resume_id: resumeId,
-        message: userMessage.content,
-        typeof_resume_id: typeof resumeId,
-        typeof_message: typeof userMessage.content
-      });
-
       const res = await fetch(chatUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -111,7 +102,7 @@ export const ChatPanel = ({ onHighlightProject }: ChatPanelProps) => {
         {
           id: Date.now().toString(),
           role: 'agent',
-          content: '❌ Failed to reach the agent.',
+          content: '❌ Failed to reach agent.',
           timestamp: new Date(),
         },
       ]);

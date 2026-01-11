@@ -4,6 +4,8 @@ An interactive, AI-powered resume and portfolio agent that transforms static CVs
 
 **🚀 Live Demo**: [Portfolio Website](https://resume-agent-llm.vercel.app/)
 
+---
+
 ### 🏠 Home Page
 
 ![Home Page](images/home_page.png)
@@ -20,24 +22,9 @@ An interactive, AI-powered resume and portfolio agent that transforms static CVs
 
 ![Projects](images/projects.png)
 
-<br>
-<br>
-
-
-**⚡ Key Innovation**: Interactive AI agents that understand your profile and provide personalized insights for different career paths.
-
-This project integrates all key sponsor tools:
-
-- **OpenRouter** – LLM inference for intelligent analysis
-- **Kestra** – workflow orchestration and automation
-- **Vercel** – seamless deployment and hosting
-- **Oumi** – AI model ranking and response evaluation
-- **CodeRabbit** – automated code reviews and quality assurance
-- **Cline** – autonomous development workflows and code scaffolding
-
 ---
 
-## 🔍 What This Project Does
+## 🎯 What This Project Does
 
 ### Problem
 
@@ -77,7 +64,6 @@ This project is a **comprehensive AI-powered resume ecosystem** that:
 - **Learning Tracker Agent**: Monitors growth patterns and skill development over time
 
 ### 3. Automated Data Intelligence
-
 
 - **Dynamic Summaries**: AI-generated role-specific summaries using OpenRouter LLM
 - **Continuous Updates**: Kestra workflows maintain data freshness
@@ -129,65 +115,49 @@ This project is a **comprehensive AI-powered resume ecosystem** that:
 
 - **OpenRouter** LLM inference engine
 - **Vercel** deployment and hosting platform
-- **CodeRabbit** automated code review
 
 ### System Architecture Diagram
 
 ```bash
-┌─────────────────────────────────────────────────────────────────┐
+┌─────────────────────────────────────────────────────────┐
 │                        USER INTERFACE                           │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
 │  │   Chat Panel    │  │  Project Cards  │  │  Role Selector  │ │
 │  │                 │  │                 │  │                 │ │
 │  │ [Chat Input]    │  │ [Project List]  │  │ [Role Buttons]  │ │
-│  │ [AI Responses]  │  │ [Tech Details]  │  │ [Filters]       │ │
+│  │ [AI Responses]  │  │                 │  │                 │ │
 │  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
+└─────────────────────────────────────────────────────────┘
                                 │
                                 ▼ HTTP/WebSocket
-┌─────────────────────────────────────────────────────────────────┐
+┌─────────────────────────────────────────────────┐
 │                        FRONTEND LAYER                           │
 │                    Next.js 16.0.8 Application                    │
-│  ┌─────────────────────────────────────────────────────────────┐ │
+│  ┌─────────────────────────────────────────────┐ │
 │  │  Components  │  Pages  │  Utils  │  Types  │  Styles        │ │
-│  └─────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
+│  └─────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────┘
                                 │
                                 ▼ HTTP REST
-┌─────────────────────────────────────────────────────────────────┐
+┌─────────────────────────────────────────────────┐
 │                        BACKEND LAYER                            │
 │                    Node.js/Express Server                       │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────┐ │
-│  │   Resume    │  │   PDF       │  │   Model     │  │  Agent  │ │
-│  │ Controller  │  │ Processor   │  │  Ranking   │  │ Service │ │
-│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────┘ │
-└─────────────────────────────────────────────────────────────────┘
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐ │
+│  │   Resume    │  │   PDF       │  │   Model     │  │  Agent  │  │
+│  │ Controller  │  │ Processor   │  │ Ranking   │  │ Service │ │
+│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘ │
+└─────────────────────────────────────────────────────────┘
                                 │
                                 ▼ External APIs
-┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
+┌─────────────────────────────────────────────────┐
 │ OpenRouter  │  │   Vercel    │  │   Kestra    │  │   Oumi      │
-│   LLM API   │  │ Deployment  │  │  Workflows  │  │  Ranking    │
+│ LLM API   │  │ Deployment  │  │ Workflows  │  │ Ranking    │
 └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘
                                 │
                                 ▼ Data Storage
-┌─────────────────────────────────────────────────────────────────┐
-│                        DATA LAYER                               │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────┐ │
-│  │   Profile   │  │  Projects   │  │  Generated  │  │ Scripts │ │
-│  │     Data    │  │    Data     │  │ Summaries   │  │   &     │ │
-│  │             │  │             │  │             │  │  Utils  │ │
-│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼ Agent System
-┌─────────────────────────────────────────────────────────────────┐
-│                        AGENT SYSTEM                             │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────┐ │
-│  │   Agent     │  │   Model     │  │   Resume    │  │ Profile │ │
-│  │   Service   │  │   Ranking   │  │   Analysis  │  │  Chat   │ │
-│  │             │  │   (Oumi)    │  │             │  │         │ │
-│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────┘ │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│ Profile Data │ Projects Data │ Generated Summaries │ Scripts │ Utils │ Types
+└─────────────────────────────────────────────────┘
 ```
 
 ---
@@ -223,77 +193,114 @@ resume-agent/
 │   │   ├── vercel.svg                # Vercel logo
 │   │   └── window.svg                # Window icon
 │   ├── package.json                  # Frontend dependencies
-│   ├── next.config.ts                # Next.js configuration
-│   ├── tsconfig.json                 # TypeScript configuration
-│   ├── tailwind.config.js            # Tailwind CSS configuration
-│   ├── postcss.config.mjs            # PostCSS configuration
-│   ├── eslint.config.mjs             # ESLint configuration
-│   └── README.md                     # Frontend documentation
-│
+│   │   ├── next.config.ts                # Next.js configuration
+│   │   ├── tsconfig.json                 # TypeScript configuration
+│   │   ├── tailwind.config.js            # Tailwind CSS configuration
+│   │   ├── postcss.config.mjs            # PostCSS configuration
+│   │   ├── eslint.config.mjs             # ESLint configuration
+│   │   └── README.md                     # Frontend documentation
 ├── backend/                           # Node.js/Express Backend
 │   ├── adapters/                     # External service adapters
 │   │   └── openrouterAdapter.ts      # OpenRouter LLM integration
 │   ├── controllers/                  # Request controllers
 │   │   └── resumeController.ts       # Resume analysis controller
-│   ├── mock/                         # Development mocks
-│   │   └── togetherMockServer.ts     # Mock LLM server
 │   ├── routes/                       # API route definitions
 │   │   ├── agent.ts                  # Agent chat routes
 │   │   ├── models.ts                 # Model ranking routes
-│   │   ├── resume.ts                 # Resume analysis routes
-│   │   └── together.ts               # LLM testing routes
+│   │   └── resume.ts                 # Resume analysis routes
 │   ├── services/                     # Business logic services
 │   │   ├── agentService.ts           # Agent chat service
-│   │   ├── integrations.ts           # External integrations
+│   │   ├── integrations.ts           # External integrations (placeholder)
 │   │   ├── modelRanker.ts            # Oumi model ranking
 │   │   ├── pdfService.ts             # PDF processing service
+│   │   ├── redisClient.ts            # Redis client wrapper
 │   │   └── resumeService.ts          # Resume analysis service
 │   ├── types.ts                      # TypeScript type definitions
 │   ├── index.ts                      # Main server entry point
 │   ├── cli-test.ts                   # CLI testing utility
 │   ├── .env.example                  # Environment template
 │   └── README.md                     # Backend documentation
-│
 ├── agents/                           # AI Agent System
 │   ├── index.ts                      # Agent exports
 │   ├── resume-agent.ts               # Resume agent implementation
 │   └── types.ts                      # Agent type definitions
-│
-├── data/                             # Data Storage
-│   └── .gitkeep                      # Placeholder for data files
-│
-├── kestra/                           # Workflow Orchestration
-│   └── workflows/                    # Kestra workflow definitions
-│       └── workflow.yml              # Data processing workflow
-│
 ├── scripts/                          # Utility Scripts
 │   ├── generate-summaries.ts         # Multi-role summary generator
 │   ├── README.md                     # Scripts documentation
 │   └── test-agent.ts                 # Agent testing script
-│
 ├── tests/                            # Test Scripts
 │   ├── simple-test.sh                # Simple functionality test
 │   ├── test-backend.sh               # Backend API tests
 │   └── test-integration.sh           # Integration tests
-│
-├── logs/                             # Application Logs
-│   ├── backend.log                   # Backend server logs
-│   └── mock.log                      # Mock server logs
-│
 ├── .coderabbit.yml                   # CodeRabbit configuration
 ├── .gitignore                        # Git ignore rules
 ├── package.json                      # Root package configuration
 ├── package-lock.json                 # Dependency lock file
 ├── tsconfig.json                     # TypeScript root configuration
-├── vercel.json                       # Vercel deployment configuration
-├── test-resume-upload.js             # Resume upload test script
-├── test_payload.json                 # Test payload data
-└── README.md                         # This documentation file
+└── vercel.json                       # Vercel deployment configuration
 ```
 
 ---
 
-##  API Documentation
+## 🚀 Quick Start
+
+### Prerequisites
+
+- **Node.js 18+** and npm
+- **OpenRouter API Key** (free tier available at [openrouter.ai](https://openrouter.ai))
+
+### Installation
+
+1. **Clone Repository**
+
+   ```bash
+   git clone https://github.com/your-username/resume-agent.git
+   cd resume-agent
+   ```
+
+2. **Install Dependencies**
+
+   ```bash
+   # Install root dependencies (includes backend)
+   npm install
+
+   # Install frontend dependencies
+   cd frontend && npm install
+   ```
+
+3. **Environment Configuration**
+
+   Create `.env` file at repository root:
+
+   ```bash
+   # Backend configuration
+   OPENROUTER_API_KEY=your_openrouter_api_key
+   OPENROUTER_API_URL=https://openrouter.ai/api/v1/chat/completions
+   OPENROUTER_MODEL=mistralai/mistral-7b-instruct
+
+   # Frontend configuration (optional)
+   BACKEND_URL=http://localhost:3000
+   ```
+
+4. **Start Development Servers**
+
+   ```bash
+   # Start backend (Terminal 1)
+   npm run dev
+
+   # Start frontend (Terminal 2)
+   cd frontend && npm run dev
+   ```
+
+### Access the Application
+
+- **Frontend**: [http://localhost:3000](http://localhost:3000)
+- **Backend**: [http://localhost:3000](http://localhost:3000) (API endpoints)
+- **Health Check**: [http://localhost:3000/health](http://localhost:3000/health)
+
+---
+
+## 📖 API Documentation
 
 ### Base URL
 
@@ -304,9 +311,9 @@ Production: https://your-app.vercel.app
 
 ### Authentication
 
-Most endpoints require an `OPENROUTER_API_KEY` environment variable. For testing purposes, you can provide the API key in the request body or use the mock server for development.
+Most endpoints require an `OPENROUTER_API_KEY` environment variable. For testing purposes, you can provide the API key in the request body.
 
-### Endpoints
+### Core Endpoints
 
 #### POST /api/resume/analyze
 
@@ -314,7 +321,7 @@ Analyzes resume text or PDF documents and generates AI-powered summaries tailore
 
 **Request:**
 
-- **Content-Type:** `multipart/form-data` (for PDF) or `application/json` (for text)
+- **Content-Type**: `multipart/form-data` (for PDF) or `application/json` (for text)
 - **Body (JSON):**
 
   ```json
@@ -417,6 +424,14 @@ Evaluate a specific model's response quality.
 }
 ```
 
+**Response:**
+
+```json
+{
+  "result": "AI-generated response based on input and instruction..."
+}
+```
+
 #### POST /api/llm/test
 
 Tests the LLM integration with custom input and instructions. Useful for development and debugging.
@@ -499,11 +514,6 @@ Common error scenarios:
    - Configure domain and SSL
    - Enable preview deployments for PRs
 
-4. **Backend Deployment**
-   - Deploy API routes as serverless functions
-   - Configure CORS for frontend domain
-   - Set up monitoring and logging
-
 ### Kestra Workflow Setup
 
 1. **Install Kestra**
@@ -521,16 +531,14 @@ Common error scenarios:
 3. **Schedule Automated Updates**
    - Configure automated data processing workflows
    - Set up summary regeneration triggers
-   - Monitor workflow execution logs
 
 ### Production Checklist
 
-- [ ] Environment variables configured
+- [x] Environment variables configured
 - [ ] SSL certificates enabled
 - [ ] Rate limiting implemented
 - [ ] Error monitoring set up
 - [ ] Backup strategies in place
-- [ ] Performance monitoring enabled
 
 ---
 
@@ -588,3 +596,19 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - **Oumi** for AI model evaluation
 - **CodeRabbit** for automated code reviews
 - **Cline** for autonomous development tools
+
+---
+
+## 📚 Documentation
+
+For detailed API documentation, see:
+- **[Backend Documentation](backend/README.md)** - Backend-specific setup, endpoints, and architecture
+- **[Frontend Documentation](frontend/README.md)** - Frontend setup, components, and deployment
+
+## 📁 Repository Structure
+
+See the complete directory structure in the [Backend Documentation](backend/README.md) or [Frontend Documentation](frontend/README.md).
+
+---
+
+**🚀 Live Demo**: [Portfolio Website](https://resume-agent-llm.vercel.app/)

@@ -4,12 +4,11 @@ dotenv.config({ path: "./backend/.env" });
 import express from "express";
 import cors from "cors";
 
+import { initRedis } from "./services/redisClient";
+
 import agentRouter from "./routes/agent";
 import resumeRouter from "./routes/resume";
-import llmRouter from "./routes/together";
 import modelsRouter from "./routes/models";
-
-import { initRedis } from "./services/redisClient";
 
 const app = express();
 // Try multiple ports to avoid conflicts
@@ -32,7 +31,6 @@ app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 app.get("/health", (_req, res) => res.json({ status: "ok", port: portsToTry[currentPort] }));
 
 app.use("/api/resume", resumeRouter);
-app.use("/api/llm", llmRouter);
 app.use("/api/models", modelsRouter);
 app.use("/api/agent", agentRouter);
 

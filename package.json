@@ -5,7 +5,6 @@
   "main": "dist/backend/cli-test.js",
   "scripts": {
     "test:agent": "tsx scripts/test-agent.ts",
-    "generate:summaries": "tsx scripts/generate-summaries.ts",
     "dev": "tsx backend/index.ts",
     "mock:llm": "tsx backend/mock/togetherMockServer.ts",
     "start": "node dist/backend/index.js",
